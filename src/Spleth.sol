@@ -22,6 +22,7 @@ contract Spleth {
 
     function initializeGroupPayWithoutApprove(address token, uint256 amount, address receiver) public {
         require (!running);
+
         running = true;
         runningToken = token;
         runningAmount = amount;
@@ -43,11 +44,14 @@ contract Spleth {
             } // todo: optimize this
         require (isParticipating, "you should be participating");
         require (approvals[msg.sender] == false, "you already approved");
+
         uint amount = runningAmount;
         uint256 shareOfAmount = amount.divUp(participants.length);
+
         IERC20(runningToken).transferFrom(msg.sender, address(this), shareOfAmount);
         approvals[msg.sender] = true;
         approved += 1;
+
         if (approved == participants.length) IERC20(runningToken).transfer(runningReceiver, amount);
     }
 
