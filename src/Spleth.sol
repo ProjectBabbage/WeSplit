@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
+import "forge-std/console.sol";
 
 contract Spleth {
 
@@ -11,7 +12,7 @@ contract Spleth {
     address public runningReceiver;
     address[] public participants;
     mapping(address => bool) public approvals;
-    
+
     constructor(address[] memory addresses) {
         participants = addresses;
     }
@@ -31,7 +32,7 @@ contract Spleth {
                 break;
             } // todo: opptimize this
         require (isParticipating, "user should be participating");
-        // SafeERC20.safeTransfer(IERC20(runningToken), runningReceiver, runningAmount);
+        IERC20(runningToken).transferFrom(msg.sender, address(this), runningAmount);
         approvals[msg.sender] = true;
     }
 }
