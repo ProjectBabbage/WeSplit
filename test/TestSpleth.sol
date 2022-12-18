@@ -15,7 +15,7 @@ contract TestSpleth is Test {
     Spleth public spleth;
     address user1 = address(123);
     address user2 = address(978);
-    address DAI = address(0x6B175474E89094C44Da98b954EedeAC495271d0F);
+    address DAI = address(0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063);
     address receiver = address(444);
 
     function setUp() public {
