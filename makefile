@@ -7,4 +7,10 @@ FOUNDRY_ETH_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}
 test:
 	forge test -vvv
 
-.PHONY: test
+build:
+	forge build --sizes
+
+create:
+	forge create --constructor-args ${CONSTRUCTOR_ARGS} --private-key ${PRIVATE_KEY} src/Spleth.sol:Spleth
+
+.PHONY: test create

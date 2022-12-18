@@ -5,20 +5,23 @@ import "forge-std/Vm.sol";
 import "forge-std/console.sol";
 import "forge-std/Test.sol";
 
-import "../src/Arith.sol";
+import "../src/Spleth.sol";
 
 contract TestArith is Test {
-    using Arith for uint256;
+
+    function divUp(uint256 x, uint256 y) private pure returns (uint256) {
+        return (x + y - 1) / y;
+    }
 
     function testFailDivZero() public pure {
         uint256 x = 2.4 ether + 1;
-        x.divUp(0);
+        divUp(x, 0);
     }
 
     function testDivision() public {
         uint256 x = 14;
-        assertEq(x.divUp(2), 7);
-        assertEq(x.divUp(3), 5);
+        assertEq(divUp(x, 2), 7);
+        assertEq(divUp(x, 3), 5);
     }
 
 }

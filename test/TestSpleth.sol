@@ -6,17 +6,19 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
-import "../src/Arith.sol";
 import "../src/Spleth.sol";
 
 contract TestSpleth is Test {
-    using Arith for uint256;
 
     Spleth public spleth;
     address user1 = address(123);
     address user2 = address(978);
     address DAI = address(0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063);
     address receiver = address(444);
+
+    function divUp(uint256 x, uint256 y) private pure returns (uint256) {
+        return (x + y - 1) / y;
+    }
 
     function setUp() public {
         address[] memory users = new address[](2);
@@ -69,6 +71,6 @@ contract TestSpleth is Test {
         uint256 balanceSpleth = IERC20(DAI).balanceOf(address(spleth));
 
         assertEq(balanceReceiver, amount, "transferred amount");
-        assertEq(balanceSpleth, 2 * amount.divUp(2) - amount, "transferred amount");
+        assertEq(balanceSpleth, 2 * divUp(amount, 2) - amount, "transferred amount");
     }
 }
