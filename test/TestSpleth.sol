@@ -32,14 +32,14 @@ contract TestSpleth is Test {
 
     function testApproval() public {
         vm.prank(user1);
-        spleth.initializeGroupPay(DAI, 1 ether, receiver);
+        spleth.initializeGroupPayWithoutApprove(DAI, 1 ether, receiver);
 
         vm.prank(user2);
         spleth.approveGroupPay();
 
         assertTrue(spleth.approvals(user2), "has approve");
         assertEq(spleth.runningReceiver(), receiver, "running receiver");
-        assertEq(spleth.runningAmount(), uint256(1 ether / 2), "running amount");
-        assertEq(IERC20(DAI).balanceOf(address(spleth)), 1 ether / 2);
+        assertEq(spleth.runningAmount(), uint256(1 ether), "running amount");
+        assertEq(IERC20(DAI).balanceOf(address(spleth)), 1 ether / 2, "balance spleth");
     }
 }
