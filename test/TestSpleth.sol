@@ -34,6 +34,17 @@ contract TestSpleth is Test {
         IERC20(DAI).approve(address(spleth), type(uint256).max);
     }
 
+    function testInitialize() public {
+        uint256 amount = 14 ether;
+        vm.prank(user1);
+        spleth.initializeGroupPayWithoutApprove(DAI, amount, receiver);
+
+        assertTrue(spleth.running(), "running token");
+        assertEq(spleth.runningToken(), DAI, "running token");
+        assertEq(spleth.runningAmount(), uint256(amount), "running amount");
+        assertEq(spleth.runningReceiver(), receiver, "running receiver");
+    }
+
     function testApproval() public {
         uint256 amount = 1 ether;
         vm.prank(user1);
@@ -43,8 +54,6 @@ contract TestSpleth is Test {
         spleth.approveGroupPay();
 
         assertTrue(spleth.approvals(user2), "has approve");
-        assertEq(spleth.runningReceiver(), receiver, "running receiver");
-        assertEq(spleth.runningAmount(), uint256(amount), "running amount");
         assertEq(IERC20(DAI).balanceOf(address(spleth)), amount / 2, "balance spleth");
     }
 
@@ -58,6 +67,7 @@ contract TestSpleth is Test {
 
         uint256 balanceReceiver = IERC20(DAI).balanceOf(receiver);
         uint256 balanceSpleth = IERC20(DAI).balanceOf(address(spleth));
+
         assertEq(balanceReceiver, amount, "transferred amount");
         assertEq(balanceSpleth, 2 * amount.divUp(2) - amount, "transferred amount");
     }
