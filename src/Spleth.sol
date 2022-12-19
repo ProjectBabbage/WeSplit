@@ -2,8 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
+import "./Arith.sol";
 
 contract Spleth {
+    using Arith for uint256;
 
     bool public running;
     address public runningToken;
@@ -15,10 +17,6 @@ contract Spleth {
 
     constructor(address[] memory addresses) {
         participants = addresses;
-    }
-
-    function divUp(uint256 x, uint256 y) private pure returns (uint256) {
-        return (x + y - 1) / y;
     }
 
     function initializeGroupPayWithoutApprove(address token, uint256 amount, address receiver) public {
@@ -46,8 +44,8 @@ contract Spleth {
         require (isParticipating, "you should be participating");
         require (approvals[msg.sender] == false, "you already approved");
 
-        uint amount = runningAmount;
-        uint256 shareOfAmount = divUp(amount, participants.length);
+        uint256 amount = runningAmount;
+        uint256 shareOfAmount = amount.divUp(participants.length);
 
         IERC20(runningToken).transferFrom(msg.sender, address(this), shareOfAmount);
         approvals[msg.sender] = true;
