@@ -8,9 +8,9 @@ test:
 	forge test -vvv
 
 build:
-	forge build --sizes
+	forge build --force --sizes
 
 create:
-	forge create --constructor-args ${CONSTRUCTOR_ARGS} --private-key ${PRIVATE_KEY} src/Spleth.sol:Spleth
+	forge create --mnemonic ${MNEMONIC_PATH} src/Spleth.sol:Spleth --constructor-args ${CONSTRUCTOR_ARGS}
 
 .PHONY: test create
