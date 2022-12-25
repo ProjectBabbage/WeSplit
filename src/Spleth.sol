@@ -12,21 +12,18 @@ contract Spleth {
 
     struct Split {
         address admin;
-        address runningToken;
-        uint256 runningAmount;
-        address runningReceiver;
+        address token;
+        uint256 amount;
+        address receiver;
         address[] participants;
         mapping(address => uint256) rankParticipant;
         mapping(address => bool) approval;
-        uint256 approved; // number of users who approved
+        uint256 approvalCount; // number of users who approved
     }
 
-    function create(address[] calldata _participants)
-        public
-        returns (uint256 splitId)
-    {
-        splitId = nextId++;
-        Split storage split = splits[splitId];
+    function create(address[] calldata _participants) public returns (uint256 id) {
+        id = nextId++;
+        Split storage split = splits[id];
         split.admin = msg.sender;
         split.participants = _participants;
         for (uint256 i; i < _participants.length; i++)
@@ -34,92 +31,78 @@ contract Spleth {
     }
 
     function initializeTransaction(
-        uint256 _splitId,
+        uint256 _id,
         address _token,
         uint256 _amount,
         address _receiver
     ) public {
-        Split storage split = splits[_splitId];
-        require(split.runningAmount == 0);
+        Split storage split = splits[_id];
+        require(split.amount == 0);
+        require(_amount != 0);
 
-        split.runningToken = _token;
-        split.runningAmount = _amount;
-        split.runningReceiver = _receiver;
+        split.token = _token;
+        split.amount = _amount;
+        split.receiver = _receiver;
         for (uint256 i; i < split.participants.length; i++)
             delete split.approval[split.participants[i]];
-        delete split.approved;
+        delete split.approvalCount;
     }
 
     function initializeTransactionAndApprove(
-        uint256 _splitId,
+        uint256 _id,
         address _token,
         uint256 _amount,
         address _receiver
     ) public {
-        initializeTransaction(_splitId, _token, _amount, _receiver);
-        approve(_splitId);
+        initializeTransaction(_id, _token, _amount, _receiver);
+        approve(_id);
     }
 
-    function approve(uint256 _splitId) public {
-        Split storage split = splits[_splitId];
-        require(split.runningAmount != 0);
-        require(
-            split.rankParticipant[msg.sender] != 0,
-            "you should be participating"
-        );
+    function approve(uint256 _id) public {
+        Split storage split = splits[_id];
+        require(split.amount != 0);
+        require(split.rankParticipant[msg.sender] != 0, "you should be participating");
         require(split.approval[msg.sender] == false, "you already approved");
 
-        address sToken = split.runningToken;
-        uint256 sAmount = split.runningAmount;
+        address sToken = split.token;
+        uint256 sAmount = split.amount;
         uint256 shareOfAmount = sAmount.divUp(split.participants.length);
 
         IERC20(sToken).transferFrom(msg.sender, address(this), shareOfAmount);
         split.approval[msg.sender] = true;
-        split.approved += 1;
+        split.approvalCount += 1;
 
-        if (split.approved == split.participants.length) {
-            IERC20(sToken).transfer(split.runningReceiver, sAmount);
-            split.runningAmount = 0;
+        if (split.approvalCount == split.participants.length) {
+            IERC20(sToken).transfer(split.receiver, sAmount);
+            split.amount = 0;
         }
     }
 
-    function participant(uint256 _splitId, uint256 _i)
-        public
-        view
-        returns (address)
-    {
-        return splits[_splitId].participants[_i];
+    function participant(uint256 _id, uint256 _index) public view returns (address) {
+        return splits[_id].participants[_index];
     }
 
-    function participantsLength(uint256 _splitId)
-        public
-        view
-        returns (uint256)
-    {
-        return splits[_splitId].participants.length;
+    function participantsLength(uint256 _id) public view returns (uint256) {
+        return splits[_id].participants.length;
     }
 
-    function token(uint256 _splitId) public view returns (address) {
-        return splits[_splitId].runningToken;
+    function token(uint256 _id) public view returns (address) {
+        return splits[_id].token;
     }
 
-    function amount(uint256 _splitId) public view returns (uint256) {
-        return splits[_splitId].runningAmount;
+    function amount(uint256 _id) public view returns (uint256) {
+        return splits[_id].amount;
     }
 
-    function receiver(uint256 _splitId) public view returns (address) {
-        return splits[_splitId].runningReceiver;
+    function receiver(uint256 _id) public view returns (address) {
+        return splits[_id].receiver;
     }
 
-    function approval(uint256 _splitId, address _user)
-        public
-        view
-        returns (bool)
-    {
-        return splits[_splitId].approval[_user];
+    function approval(uint256 _id, address _user) public view returns (bool) {
+        return splits[_id].approval[_user];
     }
 
-    function nbApproved(uint256 _splitId) public view returns (uint256) {
-        return splits[_splitId].approved;
+    function approvalCount(uint256 _id) public view returns (uint256) {
+        return splits[_id].approvalCount;
     }
 }

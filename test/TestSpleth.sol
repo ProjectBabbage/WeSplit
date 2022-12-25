@@ -28,10 +28,9 @@ contract TestSpleth is Test {
     }
 
     function setUpUser(address user) private {
-        // give users 1000 ether each and DAI can spend them ;)
-        vm.deal(user, 1000 ether);
+        // Give users 1000 units of DAI & USDC
         deal(DAI, user, 1000 ether);
-        deal(USDC, user, 1000 ether);
+        deal(USDC, user, 1000 * 1e6);
         vm.startPrank(user);
         IERC20(DAI).approve(address(spleth), type(uint256).max);
         IERC20(USDC).approve(address(spleth), type(uint256).max);
@@ -68,11 +67,7 @@ contract TestSpleth is Test {
         spleth.approve(splitId);
 
         assertTrue(spleth.approval(splitId, user2), "has approve");
-        assertEq(
-            IERC20(DAI).balanceOf(address(spleth)),
-            amount / 2,
-            "balance spleth"
-        );
+        assertEq(IERC20(DAI).balanceOf(address(spleth)), amount / 2, "balance spleth");
     }
 
     function testSend() public {
@@ -95,14 +90,14 @@ contract TestSpleth is Test {
         assertEq(spleth.amount(splitId), 0);
 
         // split properties will be overwritten/reset at the start of a new tx:
-        assertEq(spleth.nbApproved(splitId), 2);
+        assertEq(spleth.approvalCount(splitId), 2);
         assertEq(spleth.token(splitId), DAI);
         assertEq(spleth.receiver(splitId), receiver);
         //
         vm.prank(user1);
         spleth.initializeTransaction(splitId, USDC, amount / 4, address(1000));
         //
-        assertEq(spleth.nbApproved(splitId), 0);
+        assertEq(spleth.approvalCount(splitId), 0);
         assertEq(spleth.token(splitId), USDC);
         assertEq(spleth.receiver(splitId), address(1000));
         assertEq(spleth.amount(splitId), amount / 4);
