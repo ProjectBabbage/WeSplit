@@ -11,6 +11,9 @@ build:
 	forge build --force --sizes
 
 deploy:
-	forge script script/DeploySpleth.sol --private-key ${PRIVATE_KEY} --broadcast 
+	forge script script/DeploySpleth.sol --private-key ${PRIVATE_KEY} --broadcast --etherscan-api-key ${POLYGONSCAN_API_KEY} --verify
 
-.PHONY: test build deploy
+verify:
+	forge verify-contract --chain 137 --watch --constructor-args ${ENCODED_CONSTRUCTOR_ARGS} ${ADDRESS} Spleth ${POLYGONSCAN_API_KEY}
+
+.PHONY: test build deploy verify
