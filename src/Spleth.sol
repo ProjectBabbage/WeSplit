@@ -12,11 +12,14 @@ contract Spleth {
     uint256 public runningAmount;
     address public runningReceiver;
     address[] public participants;
+    mapping(address => uint256) public rankParticipant;
     mapping(address => bool) public approvals;
     uint256 approved; // number of users who approved
 
     constructor(address[] memory addresses) {
         participants = addresses;
+        for (uint256 i; i < participants.length; i++)
+            rankParticipant[participants[i]] = i+1;
     }
 
     function initializeGroupPayWithoutApprove(address token, uint256 amount, address receiver) public {
@@ -35,13 +38,7 @@ contract Spleth {
 
     function approveGroupPay() public {
         require (running);
-        bool isParticipating;
-        for (uint256 i; i < participants.length; i++)
-            if (isParticipating = participants[i] == msg.sender) {
-                isParticipating = true;
-                break;
-            } // todo: optimize this
-        require (isParticipating, "you should be participating");
+        require (rankParticipant[msg.sender] != 0, "you should be participating");
         require (approvals[msg.sender] == false, "you already approved");
 
         uint256 amount = runningAmount;
