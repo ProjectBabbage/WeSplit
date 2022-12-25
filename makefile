@@ -10,10 +10,7 @@ test:
 build:
 	forge build --force --sizes
 
-create:
-	forge create --mnemonic ${MNEMONIC_PATH} src/Spleth.sol:Spleth --constructor-args ${CONSTRUCTOR_ARGS}
-
 deploy:
-	forge script --mnemonics ${MNEMONIC_PATH} script/DeploySpleth.sol --target-contract DeploySpleth --broadcast --sender 0x6d0acdde929e5e1f33dc11bde288af36f5423bde
+	forge script script/DeploySpleth.sol --private-key ${PRIVATE_KEY} --broadcast 
 
-.PHONY: test build create deploy
+.PHONY: test build deploy
