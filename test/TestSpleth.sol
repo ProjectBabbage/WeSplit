@@ -98,4 +98,28 @@ contract TestSpleth is Test {
         assertEq(spleth.receiver(splitId), address(1000));
         assertEq(spleth.amount(splitId), amount / 4);
     }
+
+    function testTwoGroups() public {
+        uint256 amount = 5 ether + 1;
+
+        uint256 balanceReceiverBefore = IERC20(DAI).balanceOf(receiver);
+
+        vm.prank(user1);
+        uint256 firstSplitId = spleth.createAndApprove(DAI, amount, receiver, users);
+
+        vm.prank(user2);
+        uint256 secondSplitId = spleth.createAndApprove(DAI, amount, receiver, users);
+
+        assertFalse(firstSplitId == secondSplitId, "split ids should be different");
+
+        vm.prank(user1);
+        spleth.approve(secondSplitId);
+
+        vm.prank(user2);
+        spleth.approve(firstSplitId);
+
+        uint256 balanceReceiverAfter = IERC20(DAI).balanceOf(receiver);
+
+        assertEq(balanceReceiverAfter - balanceReceiverBefore, 2 * amount, "receiver did not receive its exact share");
+    }
 }
