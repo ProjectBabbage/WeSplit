@@ -16,4 +16,7 @@ deploy:
 verify:
 	forge verify-contract --chain 137 --watch --constructor-args ${ENCODED_CONSTRUCTOR_ARGS} ${ADDRESS} Spleth ${POLYGONSCAN_API_KEY}
 
+gasprice:
+	cast gas-price --rpc-url ${FOUNDRY_ETH_RPC_URL}
+
 .PHONY: test build deploy verify
