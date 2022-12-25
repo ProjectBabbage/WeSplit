@@ -11,7 +11,6 @@ contract Spleth {
     mapping(uint256 => Split) splits;
 
     struct Split {
-        address admin;
         address token;
         uint256 amount;
         address receiver;
@@ -24,21 +23,21 @@ contract Spleth {
     function create(address[] calldata _participants) public returns (uint256 id) {
         id = nextId++;
         Split storage split = splits[id];
-        split.admin = msg.sender;
         split.participants = _participants;
         for (uint256 i; i < _participants.length; i++)
             split.rankParticipant[_participants[i]] = i + 1;
     }
 
-    function initializeTransaction(
+    function initialize(
         uint256 _id,
         address _token,
         uint256 _amount,
         address _receiver
     ) public {
         Split storage split = splits[_id];
-        require(split.amount == 0);
-        require(_amount != 0);
+        require(split.rankParticipant[msg.sender] != 0, "must be participating to initialize");
+        require(split.amount == 0, "cannot initialize when tx is running");
+        require(_amount != 0, "cannot initiliaze a tx of 0 amount");
 
         split.token = _token;
         split.amount = _amount;
@@ -48,19 +47,9 @@ contract Spleth {
         delete split.approvalCount;
     }
 
-    function initializeTransactionAndApprove(
-        uint256 _id,
-        address _token,
-        uint256 _amount,
-        address _receiver
-    ) public {
-        initializeTransaction(_id, _token, _amount, _receiver);
-        approve(_id);
-    }
-
     function approve(uint256 _id) public {
         Split storage split = splits[_id];
-        require(split.amount != 0);
+        require(split.amount != 0, "tx has not been initialized yet");
         require(split.rankParticipant[msg.sender] != 0, "you should be participating");
         require(split.approval[msg.sender] == false, "you already approved");
 
@@ -76,6 +65,26 @@ contract Spleth {
             IERC20(sToken).transfer(split.receiver, sAmount);
             split.amount = 0;
         }
+    }
+
+    function initializeApprove(
+        uint256 _id,
+        address _token,
+        uint256 _amount,
+        address _receiver
+    ) public {
+        initialize(_id, _token, _amount, _receiver);
+        approve(_id);
+    }
+
+    function createInitializeApprove(
+        address[] calldata _participants,
+        address _token,
+        uint256 _amount,
+        address _receiver
+    ) public returns (uint256 id) {
+        id = create(_participants);
+        initializeApprove(id, _token, _amount, _receiver);
     }
 
     function participant(uint256 _id, uint256 _index) public view returns (address) {

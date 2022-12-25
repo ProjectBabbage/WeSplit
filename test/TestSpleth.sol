@@ -45,11 +45,12 @@ contract TestSpleth is Test {
         assertEq(spleth.participant(splitId, 1), user2);
     }
 
-    function testInitializeTransaction() public {
+    function testInitialize() public {
         uint256 amount = 14 ether;
-        uint256 splitId = 0;
-        vm.prank(user1);
-        spleth.initializeTransaction(splitId, DAI, amount, receiver);
+        vm.startPrank(user1);
+        uint256 splitId = spleth.create(users);
+        spleth.initialize(splitId, DAI, amount, receiver);
+        vm.stopPrank();
 
         assertEq(spleth.token(splitId), DAI, "running token");
         assertEq(spleth.amount(splitId), uint256(amount), "running amount");
@@ -58,15 +59,10 @@ contract TestSpleth is Test {
 
     function testPartialApproval() public {
         uint256 amount = 1 ether;
-        vm.startPrank(user1);
-        uint256 splitId = spleth.create(users);
-        spleth.initializeTransaction(splitId, DAI, amount, receiver);
-        vm.stopPrank();
+        vm.prank(user1);
+        uint256 splitId = spleth.createInitializeApprove(users, DAI, amount, receiver);
 
-        vm.prank(user2);
-        spleth.approve(splitId);
-
-        assertTrue(spleth.approval(splitId, user2), "has approve");
+        assertTrue(spleth.approval(splitId, user1), "has approve");
         assertEq(IERC20(DAI).balanceOf(address(spleth)), amount / 2, "balance spleth");
     }
 
@@ -75,7 +71,7 @@ contract TestSpleth is Test {
         vm.startPrank(user1);
         uint256 splitId = spleth.create(users);
         assertEq(spleth.token(splitId), address(0));
-        spleth.initializeTransactionAndApprove(splitId, DAI, amount, receiver);
+        spleth.initializeApprove(splitId, DAI, amount, receiver);
         vm.stopPrank();
 
         vm.prank(user2);
@@ -95,7 +91,7 @@ contract TestSpleth is Test {
         assertEq(spleth.receiver(splitId), receiver);
         //
         vm.prank(user1);
-        spleth.initializeTransaction(splitId, USDC, amount / 4, address(1000));
+        spleth.initialize(splitId, USDC, amount / 4, address(1000));
         //
         assertEq(spleth.approvalCount(splitId), 0);
         assertEq(spleth.token(splitId), USDC);
