@@ -105,10 +105,10 @@ contract TestSpleth is Test {
         uint256 balanceReceiverBefore = IERC20(DAI).balanceOf(receiver);
 
         vm.prank(user1);
-        uint256 firstSplitId = spleth.createAndApprove(DAI, amount, receiver, users);
+        uint256 firstSplitId = spleth.createInitializeApprove(users, DAI, amount, receiver);
 
         vm.prank(user2);
-        uint256 secondSplitId = spleth.createAndApprove(DAI, amount, receiver, users);
+        uint256 secondSplitId = spleth.createInitializeApprove(users, DAI, amount, receiver);
 
         assertFalse(firstSplitId == secondSplitId, "split ids should be different");
 
@@ -120,6 +120,10 @@ contract TestSpleth is Test {
 
         uint256 balanceReceiverAfter = IERC20(DAI).balanceOf(receiver);
 
-        assertEq(balanceReceiverAfter - balanceReceiverBefore, 2 * amount, "receiver did not receive its exact share");
+        assertEq(
+            balanceReceiverAfter - balanceReceiverBefore,
+            2 * amount,
+            "receiver did not receive its exact share"
+        );
     }
 }
