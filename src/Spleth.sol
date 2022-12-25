@@ -87,10 +87,6 @@ contract Spleth {
         initializeApprove(id, _token, _amount, _receiver);
     }
 
-    function participant(uint256 _id, uint256 _index) public view returns (address) {
-        return splits[_id].participants[_index];
-    }
-
     function participantsLength(uint256 _id) public view returns (uint256) {
         return splits[_id].participants.length;
     }
@@ -105,6 +101,14 @@ contract Spleth {
 
     function receiver(uint256 _id) public view returns (address) {
         return splits[_id].receiver;
+    }
+
+    function participant(uint256 _id, uint256 _index) public view returns (address) {
+        return splits[_id].participants[_index];
+    }
+
+    function rankParticipant(uint256 _id, address _user) public view returns (uint256) {
+        return splits[_id].rankParticipant[_user];
     }
 
     function approval(uint256 _id, address _user) public view returns (bool) {
