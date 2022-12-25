@@ -5,7 +5,6 @@ import "forge-std/Vm.sol";
 import "forge-std/console.sol";
 import "forge-std/Test.sol";
 
-import "../src/Spleth.sol";
 import "../src/Arith.sol";
 
 contract TestArith is Test {
@@ -21,5 +20,4 @@ contract TestArith is Test {
         assertEq(x.divUp(2), 7);
         assertEq(x.divUp(3), 5);
     }
-
 }

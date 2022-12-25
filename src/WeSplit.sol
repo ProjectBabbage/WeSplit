@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Arith.sol";
 
-contract Spleth {
+contract WeSplit {
     using Arith for uint256;
 
     uint256 public nextId;
