@@ -11,10 +11,10 @@ build:
 	forge build --force --sizes
 
 deploy:
-	forge script script/DeploySpleth.sol --private-key ${PRIVATE_KEY} --broadcast --etherscan-api-key ${POLYGONSCAN_API_KEY} --verify
+	forge script script/DeployWeSplit.sol --private-key ${PRIVATE_KEY} --broadcast --etherscan-api-key ${POLYGONSCAN_API_KEY} --verify
 
 verify:
-	forge verify-contract --chain 137 --watch --constructor-args ${ENCODED_CONSTRUCTOR_ARGS} ${ADDRESS} Spleth ${POLYGONSCAN_API_KEY}
+	forge verify-contract --chain 137 --watch --constructor-args ${ENCODED_CONSTRUCTOR_ARGS} ${ADDRESS} WeSplit ${POLYGONSCAN_API_KEY}
 
 gasprice:
 	cast gas-price --rpc-url ${FOUNDRY_ETH_RPC_URL}

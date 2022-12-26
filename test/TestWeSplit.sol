@@ -9,7 +9,7 @@ import "forge-std/console.sol";
 import "../src/WeSplit.sol";
 import "../src/Arith.sol";
 
-contract TestSpleth is Test {
+contract TestWeSplit is Test {
     using Arith for uint256;
 
     WeSplit public weSplit;
@@ -78,10 +78,10 @@ contract TestSpleth is Test {
         weSplit.approve(splitId);
 
         uint256 balanceReceiver = IERC20(DAI).balanceOf(receiver);
-        uint256 balanceSpleth = IERC20(DAI).balanceOf(address(weSplit));
+        uint256 balanceWeSplit = IERC20(DAI).balanceOf(address(weSplit));
 
         assertEq(balanceReceiver, amount, "transferred amount");
-        assertEq(balanceSpleth, 2 * amount.divUp(2) - amount, "dust amount");
+        assertEq(balanceWeSplit, 2 * amount.divUp(2) - amount, "dust amount");
         // split amount is reset at the end of the function:
         assertEq(weSplit.amount(splitId), 0);
 
