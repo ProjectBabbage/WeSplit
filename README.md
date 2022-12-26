@@ -11,6 +11,8 @@ WeSplit is [available on polygonscan](https://polygonscan.com/address/0x748610d5
 3. everyone should `approve` the transaction
 4. funds are splitted and sent automatically !
 
+For convenience, the functions `initializeApprove` and `createInitializeApprove` group multiple actions together.
+
 ## Develop
 
 Fill the `.env` file with appropriate env variables, see `.env.example` for a list of variables.
