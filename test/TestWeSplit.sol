@@ -126,4 +126,34 @@ contract TestWeSplit is Test {
             "receiver did not receive its exact share"
         );
     }
+
+    function testNotTransferable() public {
+        uint256 amount = 6 * 1e6 + 1;
+
+        address otherUser = address(111);
+
+        address[] memory allUsers = new address[](users.length + 1);
+        for (uint256 i; i < users.length; i++) allUsers[i] = users[i];
+        allUsers[allUsers.length - 1] = otherUser;
+
+        vm.prank(user1);
+        uint256 firstSplitId = weSplit.createInitializeApprove(allUsers, DAI, amount, receiver);
+        address token = weSplit.token(firstSplitId);
+
+        assertFalse(weSplit.checkTransferabilityUser(firstSplitId, otherUser), "not approved");
+
+        vm.prank(otherUser);
+        weSplit.approve(firstSplitId);
+
+        assertFalse(weSplit.checkTransferabilityUser(firstSplitId, otherUser), "weSplit approved");
+
+        vm.prank(otherUser);
+        IERC20(token).approve(address(weSplit), type(uint256).max);
+
+        assertFalse(weSplit.checkTransferabilityUser(firstSplitId, otherUser), "token approved");
+
+        deal(DAI, otherUser, amount);
+
+        assertTrue(weSplit.checkTransferabilityUser(firstSplitId, otherUser), "enough funds");
+    }
 }

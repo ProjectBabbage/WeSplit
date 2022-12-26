@@ -141,4 +141,28 @@ contract WeSplit {
     function approvalCount(uint256 _id) public view returns (uint256) {
         return splits[_id].approvalCount;
     }
+
+    function checkTransferabilityUser(uint256 _id, address _user) public view returns (bool) {
+        Split storage split = splits[_id];
+        require(split.rankParticipant[_user] != 0, "user should be participating");
+        mapping(address => bool) storage sApproval = split.approval;
+        address[] memory participants = split.participants;
+        address sToken = split.token;
+        uint256 sAmount = split.amount;
+        uint256 length = participants.length;
+        uint256 shareOfAmount = sAmount.divUp(length);
+
+        bool enoughAllowed = IERC20(sToken).allowance(_user, address(this)) > shareOfAmount;
+        bool enoughBalance = IERC20(sToken).balanceOf(_user) > shareOfAmount;
+        bool approved = sApproval[_user];
+        return enoughAllowed && enoughBalance && approved;
+    }
+
+    function checkTransferability(uint256 _id) public view returns (bool) {
+        Split storage split = splits[_id];
+        address[] memory participants = split.participants;
+        for (uint256 i; i < participants.length; i++)
+            if (!checkTransferabilityUser(_id, participants[i])) return false;
+        return true;
+    }
 }
