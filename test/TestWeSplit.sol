@@ -63,7 +63,7 @@ contract TestWeSplit is Test {
         uint256 splitId = weSplit.createInitializeApprove(users, DAI, amount, receiver);
 
         assertTrue(weSplit.approval(splitId, user1), "has approve");
-        assertEq(IERC20(DAI).balanceOf(address(weSplit)), amount / 2, "balance weSplit");
+        assertEq(IERC20(DAI).balanceOf(address(weSplit)), 0, "balance weSplit");
     }
 
     function testSend() public {
