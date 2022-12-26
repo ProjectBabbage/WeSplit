@@ -1,17 +1,21 @@
 name: test
 
-on: workflow_dispatch
+on: # and a condition on commit (example: it must contain "release")
+  push:
+    branches: [main]
+  pull_request:
 
 env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  check:
+  forge-test:
     strategy:
       fail-fast: true
-
     name: Foundry project
     runs-on: ubuntu-latest
+    env:
+      ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -22,13 +26,7 @@ jobs:
         with:
           version: nightly
 
-      - name: Run Forge build
-        run: |
-          forge --version
-          forge build --sizes
-        id: build
-
       - name: Run Forge tests
         run: |
-          forge test -vvv
+          make test
         id: test
