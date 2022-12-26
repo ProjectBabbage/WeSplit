@@ -7,6 +7,21 @@ import "./Arith.sol";
 contract WeSplit {
     using Arith for uint256;
 
+    event Created(uint256 indexed id, address[] participants);
+    event Initialized(
+        uint256 indexed id,
+        address[] participants,
+        address token,
+        uint256 amount,
+        address indexed receiver
+    );
+    event Approved(
+        uint256 indexed id,
+        address[] participants,
+        address indexed approver,
+        uint256 amount
+    );
+
     uint256 public nextId;
     mapping(uint256 => Split) splits;
 
@@ -26,6 +41,8 @@ contract WeSplit {
         split.participants = _participants;
         for (uint256 i; i < _participants.length; i++)
             split.rankParticipant[_participants[i]] = i + 1;
+
+        emit Created(id, _participants);
     }
 
     function initialize(
@@ -45,6 +62,8 @@ contract WeSplit {
         for (uint256 i; i < split.participants.length; i++)
             delete split.approval[split.participants[i]];
         delete split.approvalCount;
+
+        emit Initialized(_id, split.participants, _token, _amount, _receiver);
     }
 
     function approve(uint256 _id) public {
@@ -65,6 +84,8 @@ contract WeSplit {
             IERC20(sToken).transfer(split.receiver, sAmount);
             split.amount = 0;
         }
+
+        emit Approved(_id, split.participants, msg.sender, sAmount);
     }
 
     function initializeApprove(
