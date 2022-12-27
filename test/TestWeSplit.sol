@@ -41,9 +41,10 @@ contract TestWeSplit is Test {
     function testCreate() public {
         vm.prank(user1);
         uint256 splitId = weSplit.create(users);
-        assertEq(weSplit.participantsLength(splitId), 2);
-        assertEq(weSplit.participant(splitId, 0), user1);
-        assertEq(weSplit.participant(splitId, 1), user2);
+        address[] memory participants = weSplit.participants(splitId);
+        assertEq(participants.length, 2, "participants length");
+        assertEq(participants[0], user1, "participant 0");
+        assertEq(participants[1], user2, "participant 1");
     }
 
     function testInitialize() public {
@@ -69,13 +70,23 @@ contract TestWeSplit is Test {
 
     function testSend() public {
         uint256 amount = 3 ether + 1;
-        vm.startPrank(user1);
+
+        vm.prank(user1);
         uint256 splitId = weSplit.create(users);
-        assertEq(weSplit.weight(splitId, 0), 1);
-        assertEq(weSplit.token(splitId), address(0));
+
+        // The following variables are set after initialize
+        assertEq(weSplit.token(splitId), address(0), "token should not be set");
+        assertEq(weSplit.amount(splitId), 0, "amount should be 0");
+        assertEq(weSplit.receiver(splitId), address(0), "receiver should not be set");
+        assertEq(weSplit.weights(splitId).length, 0, "weights should not be set");
+
+        vm.prank(user1);
         weSplit.initializeApprove(splitId, DAI, amount, receiver, weights);
-        assertEq(weSplit.weight(splitId, 0), 1);
-        vm.stopPrank();
+
+        uint256[] memory sWeights = weSplit.weights(splitId);
+        assertEq(sWeights.length, 2, "length of weights");
+        assertEq(sWeights[0], 1, "weight of 0");
+        assertEq(sWeights[1], 1, "weight of 1");
 
         vm.prank(user2);
         weSplit.approve(splitId);
@@ -89,17 +100,17 @@ contract TestWeSplit is Test {
         assertEq(weSplit.amount(splitId), 0);
 
         // split properties will be overwritten/reset at the start of a new tx:
-        assertEq(weSplit.approvalCount(splitId), 2);
-        assertEq(weSplit.token(splitId), DAI);
-        assertEq(weSplit.receiver(splitId), receiver);
+        assertEq(weSplit.approvalCount(splitId), 2, "approval count not reset");
+        assertEq(weSplit.token(splitId), DAI, "token not reset");
+        assertEq(weSplit.receiver(splitId), receiver, "receiver not reset");
         //
         vm.prank(user1);
         weSplit.initialize(splitId, USDC, amount / 4, address(1000), weights);
         //
-        assertEq(weSplit.approvalCount(splitId), 0);
-        assertEq(weSplit.token(splitId), USDC);
-        assertEq(weSplit.receiver(splitId), address(1000));
-        assertEq(weSplit.amount(splitId), amount / 4);
+        assertEq(weSplit.approvalCount(splitId), 0, "approval count reset");
+        assertEq(weSplit.token(splitId), USDC, "token changed");
+        assertEq(weSplit.receiver(splitId), address(1000), "receiver changed");
+        assertEq(weSplit.amount(splitId), amount / 4, "amount changed");
     }
 
     function testTwoGroups() public {
@@ -186,18 +197,23 @@ contract TestWeSplit is Test {
         vm.prank(user1);
         uint256 splitId = weSplit.createInitializeApprove(users, DAI, amount, receiver, newWeights);
 
-        assertEq(weSplit.weight(splitId, 0), newWeights[0]);
-        assertEq(weSplit.weight(splitId, 1), newWeights[1]);
+        uint256[] memory sWeights = weSplit.weights(splitId);
+        assertEq(sWeights.length, 2, "weights length");
+        assertEq(sWeights[0], newWeights[0], "weight 0");
+        assertEq(sWeights[1], newWeights[1], "weight 1");
+
+        uint256 balanceBeforeUser1 = IERC20(DAI).balanceOf(user1);
+        uint256 balanceBeforeUser2 = IERC20(DAI).balanceOf(user2);
 
         vm.prank(user2);
         weSplit.approve(splitId);
 
-        uint256 balanceReceiver = IERC20(DAI).balanceOf(receiver);
-        uint256 balanceUser1 = IERC20(DAI).balanceOf(user1);
-        uint256 balanceUser2 = IERC20(DAI).balanceOf(user2);
+        uint256 balanceAfterReceiver = IERC20(DAI).balanceOf(receiver);
+        uint256 balanceAfterUser1 = IERC20(DAI).balanceOf(user1);
+        uint256 balanceAfterUser2 = IERC20(DAI).balanceOf(user2);
 
-        assertEq(balanceReceiver, amount, "transferred amount");
-        assertEq(balanceUser1, 1000 ether - 3 ether, "balance user1");
-        assertEq(balanceUser2, 1000 ether - 4 ether, "balance user2");
+        assertEq(balanceAfterReceiver, amount, "transferred amount");
+        assertEq(balanceBeforeUser1 - balanceAfterUser1, 3 ether, "balance user1");
+        assertEq(balanceBeforeUser2 - balanceAfterUser2, 4 ether, "balance user2");
     }
 }
