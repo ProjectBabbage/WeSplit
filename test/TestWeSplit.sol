@@ -19,6 +19,7 @@ contract TestWeSplit is Test {
     address USDC = address(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174);
     address receiver = address(444);
     address[] users = new address[](2);
+    uint256[] weights;
 
     function setUp() public {
         weSplit = new WeSplit();
@@ -49,7 +50,7 @@ contract TestWeSplit is Test {
         uint256 amount = 14 ether;
         vm.startPrank(user1);
         uint256 splitId = weSplit.create(users);
-        weSplit.initialize(splitId, DAI, amount, receiver);
+        weSplit.initialize(splitId, DAI, amount, receiver, weights);
         vm.stopPrank();
 
         assertEq(weSplit.token(splitId), DAI, "running token");
@@ -60,7 +61,7 @@ contract TestWeSplit is Test {
     function testPartialApproval() public {
         uint256 amount = 1 ether;
         vm.prank(user1);
-        uint256 splitId = weSplit.createInitializeApprove(users, DAI, amount, receiver);
+        uint256 splitId = weSplit.createInitializeApprove(users, DAI, amount, receiver, weights);
 
         assertTrue(weSplit.approval(splitId, user1), "has approve");
         assertEq(IERC20(DAI).balanceOf(address(weSplit)), 0, "balance weSplit");
@@ -70,8 +71,10 @@ contract TestWeSplit is Test {
         uint256 amount = 3 ether + 1;
         vm.startPrank(user1);
         uint256 splitId = weSplit.create(users);
+        assertEq(weSplit.weight(splitId, 0), 1);
         assertEq(weSplit.token(splitId), address(0));
-        weSplit.initializeApprove(splitId, DAI, amount, receiver);
+        weSplit.initializeApprove(splitId, DAI, amount, receiver, weights);
+        assertEq(weSplit.weight(splitId, 0), 1);
         vm.stopPrank();
 
         vm.prank(user2);
@@ -91,7 +94,7 @@ contract TestWeSplit is Test {
         assertEq(weSplit.receiver(splitId), receiver);
         //
         vm.prank(user1);
-        weSplit.initialize(splitId, USDC, amount / 4, address(1000));
+        weSplit.initialize(splitId, USDC, amount / 4, address(1000), weights);
         //
         assertEq(weSplit.approvalCount(splitId), 0);
         assertEq(weSplit.token(splitId), USDC);
@@ -105,10 +108,22 @@ contract TestWeSplit is Test {
         uint256 balanceReceiverBefore = IERC20(DAI).balanceOf(receiver);
 
         vm.prank(user1);
-        uint256 firstSplitId = weSplit.createInitializeApprove(users, DAI, amount, receiver);
+        uint256 firstSplitId = weSplit.createInitializeApprove(
+            users,
+            DAI,
+            amount,
+            receiver,
+            weights
+        );
 
         vm.prank(user2);
-        uint256 secondSplitId = weSplit.createInitializeApprove(users, DAI, amount, receiver);
+        uint256 secondSplitId = weSplit.createInitializeApprove(
+            users,
+            DAI,
+            amount,
+            receiver,
+            weights
+        );
 
         assertFalse(firstSplitId == secondSplitId, "split ids should be different");
 
@@ -137,7 +152,13 @@ contract TestWeSplit is Test {
         allUsers[allUsers.length - 1] = otherUser;
 
         vm.prank(user1);
-        uint256 firstSplitId = weSplit.createInitializeApprove(allUsers, DAI, amount, receiver);
+        uint256 firstSplitId = weSplit.createInitializeApprove(
+            allUsers,
+            DAI,
+            amount,
+            receiver,
+            weights
+        );
         address token = weSplit.token(firstSplitId);
 
         assertFalse(weSplit.checkTransferabilityUser(firstSplitId, otherUser), "not approved");
@@ -155,5 +176,28 @@ contract TestWeSplit is Test {
         deal(DAI, otherUser, amount);
 
         assertTrue(weSplit.checkTransferabilityUser(firstSplitId, otherUser), "enough funds");
+    }
+
+    function testWeights() public {
+        uint256 amount = 7 ether;
+        uint256[] memory newWeights = new uint256[](2);
+        newWeights[0] = 3;
+        newWeights[1] = 4;
+        vm.prank(user1);
+        uint256 splitId = weSplit.createInitializeApprove(users, DAI, amount, receiver, newWeights);
+
+        assertEq(weSplit.weight(splitId, 0), newWeights[0]);
+        assertEq(weSplit.weight(splitId, 1), newWeights[1]);
+
+        vm.prank(user2);
+        weSplit.approve(splitId);
+
+        uint256 balanceReceiver = IERC20(DAI).balanceOf(receiver);
+        uint256 balanceUser1 = IERC20(DAI).balanceOf(user1);
+        uint256 balanceUser2 = IERC20(DAI).balanceOf(user2);
+
+        assertEq(balanceReceiver, amount, "transferred amount");
+        assertEq(balanceUser1, 1000 ether - 3 ether, "balance user1");
+        assertEq(balanceUser2, 1000 ether - 4 ether, "balance user2");
     }
 }
