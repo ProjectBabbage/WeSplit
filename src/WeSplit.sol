@@ -56,14 +56,14 @@ contract WeSplit {
         require(split.amount == 0, "cannot initialize when tx is running");
         require(_amount != 0, "cannot initiliaze a tx of 0 amount");
 
+        address[] memory participants = split.participants;
         split.token = _token;
         split.amount = _amount;
         split.receiver = _receiver;
-        for (uint256 i; i < split.participants.length; i++)
-            delete split.approval[split.participants[i]];
+        for (uint256 i; i < participants.length; i++) delete split.approval[participants[i]];
         delete split.approvalCount;
 
-        emit Initialized(_id, split.participants, _token, _amount, _receiver);
+        emit Initialized(_id, participants, _token, _amount, _receiver);
     }
 
     function approve(uint256 _id) public {
@@ -72,20 +72,22 @@ contract WeSplit {
         require(split.rankParticipant[msg.sender] != 0, "you should be participating");
         require(split.approval[msg.sender] == false, "you already approved");
 
+        address[] memory participants = split.participants;
         address sToken = split.token;
         uint256 sAmount = split.amount;
-        uint256 shareOfAmount = sAmount.divUp(split.participants.length);
+        uint256 shareOfAmount = sAmount.divUp(participants.length);
 
-        IERC20(sToken).transferFrom(msg.sender, address(this), shareOfAmount);
         split.approval[msg.sender] = true;
         split.approvalCount += 1;
 
-        if (split.approvalCount == split.participants.length) {
+        if (split.approvalCount == participants.length) {
+            for (uint256 i; i < participants.length; i++)
+                IERC20(sToken).transferFrom(participants[i], address(this), shareOfAmount);
             IERC20(sToken).transfer(split.receiver, sAmount);
             split.amount = 0;
         }
 
-        emit Approved(_id, split.participants, msg.sender, sAmount);
+        emit Approved(_id, participants, msg.sender, sAmount);
     }
 
     function initializeApprove(
@@ -138,5 +140,29 @@ contract WeSplit {
 
     function approvalCount(uint256 _id) public view returns (uint256) {
         return splits[_id].approvalCount;
+    }
+
+    function checkTransferabilityUser(uint256 _id, address _user) public view returns (bool) {
+        Split storage split = splits[_id];
+        require(split.rankParticipant[_user] != 0, "user should be participating");
+        mapping(address => bool) storage sApproval = split.approval;
+        address[] memory participants = split.participants;
+        address sToken = split.token;
+        uint256 sAmount = split.amount;
+        uint256 length = participants.length;
+        uint256 shareOfAmount = sAmount.divUp(length);
+
+        bool enoughAllowed = IERC20(sToken).allowance(_user, address(this)) > shareOfAmount;
+        bool enoughBalance = IERC20(sToken).balanceOf(_user) > shareOfAmount;
+        bool approved = sApproval[_user];
+        return enoughAllowed && enoughBalance && approved;
+    }
+
+    function checkTransferability(uint256 _id) public view returns (bool) {
+        Split storage split = splits[_id];
+        address[] memory participants = split.participants;
+        for (uint256 i; i < participants.length; i++)
+            if (!checkTransferabilityUser(_id, participants[i])) return false;
+        return true;
     }
 }
