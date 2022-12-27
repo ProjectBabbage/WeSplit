@@ -30,6 +30,7 @@ contract WeSplit {
         uint256 amount;
         address receiver;
         address[] participants;
+        uint256[] weights;
         mapping(address => uint256) rankParticipant;
         mapping(address => bool) approval;
         uint256 approvalCount; // number of users who approved
@@ -39,8 +40,11 @@ contract WeSplit {
         id = nextId++;
         Split storage split = splits[id];
         split.participants = _participants;
-        for (uint256 i; i < _participants.length; i++)
+        split.weights = new uint256[](_participants.length);
+        for (uint256 i; i < _participants.length; i++) {
+            split.weights[i] = 1;
             split.rankParticipant[_participants[i]] = i + 1;
+        }
 
         emit Created(id, _participants);
     }
@@ -49,12 +53,19 @@ contract WeSplit {
         uint256 _id,
         address _token,
         uint256 _amount,
-        address _receiver
+        address _receiver,
+        uint256[] calldata _weights
     ) public {
         Split storage split = splits[_id];
         require(split.rankParticipant[msg.sender] != 0, "must be participating to initialize");
         require(split.amount == 0, "cannot initialize when tx is running");
         require(_amount != 0, "cannot initiliaze a tx of 0 amount");
+
+        if (_weights.length == 0) {
+            for (uint256 i; i < split.participants.length; i++) split.weights[i] = 1;
+        } else {
+            split.weights = _weights;
+        }
 
         address[] memory participants = split.participants;
         split.token = _token;
@@ -75,14 +86,17 @@ contract WeSplit {
         address[] memory participants = split.participants;
         address sToken = split.token;
         uint256 sAmount = split.amount;
-        uint256 shareOfAmount = sAmount.divUp(participants.length);
 
         split.approval[msg.sender] = true;
         split.approvalCount += 1;
 
         if (split.approvalCount == participants.length) {
-            for (uint256 i; i < participants.length; i++)
+            uint256 weightsSum;
+            for (uint256 i; i < participants.length; i++) weightsSum += split.weights[i];
+            for (uint256 i; i < participants.length; i++) {
+                uint256 shareOfAmount = (sAmount * split.weights[i]).divUp(weightsSum);
                 IERC20(sToken).transferFrom(participants[i], address(this), shareOfAmount);
+            }
             IERC20(sToken).transfer(split.receiver, sAmount);
             split.amount = 0;
         }
@@ -94,9 +108,10 @@ contract WeSplit {
         uint256 _id,
         address _token,
         uint256 _amount,
-        address _receiver
+        address _receiver,
+        uint256[] calldata _weights
     ) public {
-        initialize(_id, _token, _amount, _receiver);
+        initialize(_id, _token, _amount, _receiver, _weights);
         approve(_id);
     }
 
@@ -104,10 +119,11 @@ contract WeSplit {
         address[] calldata _participants,
         address _token,
         uint256 _amount,
-        address _receiver
+        address _receiver,
+        uint256[] calldata _weights
     ) public returns (uint256 id) {
         id = create(_participants);
-        initializeApprove(id, _token, _amount, _receiver);
+        initializeApprove(id, _token, _amount, _receiver, _weights);
     }
 
     function participantsLength(uint256 _id) public view returns (uint256) {
@@ -140,6 +156,10 @@ contract WeSplit {
 
     function approvalCount(uint256 _id) public view returns (uint256) {
         return splits[_id].approvalCount;
+    }
+
+    function weight(uint256 _id, uint256 _index) public view returns (uint256) {
+        return splits[_id].weights[_index];
     }
 
     function checkTransferabilityUser(uint256 _id, address _user) public view returns (bool) {
