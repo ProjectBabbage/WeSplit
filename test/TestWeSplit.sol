@@ -218,21 +218,27 @@ contract TestWeSplit is Test {
         assertEq(balanceBeforeUser2 - balanceAfterUser2, 4 ether, "balance user2");
     }
 
-    function testWrongWeightsDefaultToOnes() public {
-        uint256 amount = 7 ether;
-
+    function testNoWeightsDefaultToOnes() public {
         uint256[] memory expectedWeights = new uint256[](2);
         for (uint256 i = 0; i < 2; i++) expectedWeights[i] = 1;
+        uint256[] memory emptyWeights;
 
         vm.prank(user1);
         uint256 splitId = weSplit.createInitializeApprove(
             users,
             DAI,
-            amount,
+            1 ether,
             receiver,
-            new uint256[](5)
+            emptyWeights
         );
 
         assertEq(weSplit.weights(splitId), expectedWeights);
+    }
+
+    function testFailWrongWeights() public {
+        uint256[] memory wrongWeights = new uint256[](3);
+
+        vm.prank(user1);
+        weSplit.createInitializeApprove(users, DAI, 1 ether, receiver, wrongWeights);
     }
 }

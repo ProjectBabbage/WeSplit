@@ -59,10 +59,14 @@ contract WeSplit {
         require(split.amount == 0, "cannot initialize when tx is running");
         require(_amount != 0, "cannot initiliaze a tx of 0 amount");
 
-        if (_weights.length != split.participants.length) {
+        if (_weights.length == 0) {
             // if no correct weights are provided, it defaults to an array of ones
             for (uint256 i; i < split.participants.length; i++) split.weights[i] = 1;
         } else {
+            require(
+                _weights.length == split.participants.length,
+                "weights sould have the same size as participants"
+            );
             split.weights = _weights;
         }
 
