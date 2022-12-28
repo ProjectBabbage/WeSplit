@@ -78,7 +78,8 @@ contract TestWeSplit is Test {
         assertEq(weSplit.token(splitId), address(0), "token should not be set");
         assertEq(weSplit.amount(splitId), 0, "amount should be 0");
         assertEq(weSplit.receiver(splitId), address(0), "receiver should not be set");
-        assertEq(weSplit.weights(splitId).length, 0, "weights should not be set");
+        assertEq(weSplit.weights(splitId)[0], 0, "weights[0] should not be set");
+        assertEq(weSplit.weights(splitId)[1], 0, "weights[1] should not be set");
 
         vm.prank(user1);
         weSplit.initializeApprove(splitId, DAI, amount, receiver, weights);
@@ -215,5 +216,23 @@ contract TestWeSplit is Test {
         assertEq(balanceAfterReceiver, amount, "transferred amount");
         assertEq(balanceBeforeUser1 - balanceAfterUser1, 3 ether, "balance user1");
         assertEq(balanceBeforeUser2 - balanceAfterUser2, 4 ether, "balance user2");
+    }
+
+    function testWrongWeightsDefaultToOnes() public {
+        uint256 amount = 7 ether;
+
+        uint256[] memory expectedWeights = new uint256[](2);
+        for (uint256 i = 0; i < 2; i++) expectedWeights[i] = 1;
+
+        vm.prank(user1);
+        uint256 splitId = weSplit.createInitializeApprove(
+            users,
+            DAI,
+            amount,
+            receiver,
+            new uint256[](5)
+        );
+
+        assertEq(weSplit.weights(splitId), expectedWeights);
     }
 }
