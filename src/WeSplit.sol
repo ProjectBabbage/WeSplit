@@ -40,6 +40,7 @@ contract WeSplit {
         id = nextId++;
         Split storage split = splits[id];
         split.participants = _participants;
+        split.weights = new uint256[](_participants.length);
         for (uint256 i; i < _participants.length; i++)
             split.rankParticipant[_participants[i]] = i + 1;
 
@@ -58,8 +59,9 @@ contract WeSplit {
         require(split.amount == 0, "cannot initialize when tx is running");
         require(_amount != 0, "cannot initiliaze a tx of 0 amount");
 
-        if (_weights.length == 0) {
-            for (uint256 i; i < split.participants.length; i++) split.weights.push(1);
+        if (_weights.length != split.participants.length) {
+            // if no correct weights are provided, it defaults to an array of ones
+            for (uint256 i; i < split.participants.length; i++) split.weights[i] = 1;
         } else {
             split.weights = _weights;
         }
