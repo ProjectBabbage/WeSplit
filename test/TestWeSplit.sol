@@ -13,19 +13,32 @@ contract TestWeSplit is Test {
     using Arith for uint256;
 
     WeSplit public weSplit;
-    address user1 = address(123);
-    address user2 = address(978);
+    address user1;
+    address user2;
+    address user3;
+    address otherUser;
+    address receiver;
     address DAI = address(0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063);
     address USDC = address(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174);
-    address receiver = address(444);
+    address[] allUsers = new address[](5);
     address[] users = new address[](2);
     uint256[] weights;
 
     function setUp() public {
         weSplit = new WeSplit();
+        for (uint256 i; i < allUsers.length; i++) {
+            allUsers[i] = address(uint160(100 + i));
+            setUpUser(allUsers[i]);
+        }
+        user1 = allUsers[0];
+        user2 = allUsers[1];
+        user3 = allUsers[2];
+
+        otherUser = address(uint160(100 + allUsers.length));
+        receiver = address(uint160(100 + allUsers.length + 1));
+
         users[0] = user1;
         users[1] = user2;
-        for (uint256 i; i < users.length; i++) setUpUser(users[i]);
     }
 
     function setUpUser(address user) private {
@@ -157,21 +170,19 @@ contract TestWeSplit is Test {
     function testNotTransferable() public {
         uint256 amount = 6 * 1e6 + 1;
 
-        address otherUser = address(111);
-
-        address[] memory allUsers = new address[](users.length + 1);
-        for (uint256 i; i < users.length; i++) allUsers[i] = users[i];
-        allUsers[allUsers.length - 1] = otherUser;
+        address[] memory splitUsers = new address[](3);
+        splitUsers[0] = user1;
+        splitUsers[1] = user2;
+        splitUsers[2] = otherUser;
 
         vm.prank(user1);
         uint256 firstSplitId = weSplit.createInitializeApprove(
-            allUsers,
+            splitUsers,
             DAI,
             amount,
             receiver,
             weights
         );
-        address token = weSplit.token(firstSplitId);
 
         assertFalse(weSplit.checkTransferabilityUser(firstSplitId, otherUser), "not approved");
 
@@ -181,7 +192,7 @@ contract TestWeSplit is Test {
         assertFalse(weSplit.checkTransferabilityUser(firstSplitId, otherUser), "weSplit approved");
 
         vm.prank(otherUser);
-        IERC20(token).approve(address(weSplit), type(uint256).max);
+        IERC20(DAI).approve(address(weSplit), type(uint256).max);
 
         assertFalse(weSplit.checkTransferabilityUser(firstSplitId, otherUser), "token approved");
 
@@ -240,5 +251,83 @@ contract TestWeSplit is Test {
 
         vm.prank(user1);
         weSplit.createInitializeApprove(users, DAI, 1 ether, receiver, wrongWeights);
+    }
+
+    function testCreateFromScratch() public {
+        uint256 amount = 9 ether;
+
+        address[] memory splitUsers = new address[](1);
+        splitUsers[0] = user1;
+
+        vm.startPrank(user1);
+        uint256 splitId = weSplit.create(splitUsers);
+        weSplit.addParticipant(splitId, user2);
+        weSplit.addParticipant(splitId, user3);
+        assertEq(weSplit.rankParticipant(splitId, user1), 1, "user1 is at rank 1");
+        assertEq(weSplit.rankParticipant(splitId, user2), 2, "user3 is at rank 2");
+        assertEq(weSplit.rankParticipant(splitId, user3), 3, "user2 is at rank 3");
+
+        uint256 balanceUser1Start = IERC20(DAI).balanceOf(user1);
+        uint256 balanceUser2Start = IERC20(DAI).balanceOf(user2);
+        uint256 balanceUser3Start = IERC20(DAI).balanceOf(user3);
+
+        uint256[] memory firstWeights = new uint256[](3);
+        firstWeights[0] = 3;
+        firstWeights[1] = 4;
+        firstWeights[2] = 2;
+        weSplit.initializeApprove(splitId, DAI, amount, receiver, firstWeights);
+        vm.stopPrank();
+
+        vm.prank(user2);
+        weSplit.approve(splitId);
+        vm.prank(user3);
+        weSplit.approve(splitId);
+
+        uint256 balanceUser1Middle = IERC20(DAI).balanceOf(user1);
+        uint256 balanceUser2Middle = IERC20(DAI).balanceOf(user2);
+        uint256 balanceUser3Middle = IERC20(DAI).balanceOf(user3);
+
+        assertEq(
+            balanceUser1Start - balanceUser1Middle,
+            3 ether,
+            "balance user 1 first transaction"
+        );
+        assertEq(
+            balanceUser2Start - balanceUser2Middle,
+            4 ether,
+            "balance user 2 first transaction"
+        );
+        assertEq(
+            balanceUser3Start - balanceUser3Middle,
+            2 ether,
+            "balance user 3 first transaction"
+        );
+
+        vm.prank(user2);
+        weSplit.removeParticipant(splitId, user1);
+        assertEq(weSplit.rankParticipant(splitId, user1), 0, "user1 is not in the split anymore");
+        assertEq(weSplit.rankParticipant(splitId, user2), 2, "user2 is now second");
+        assertEq(weSplit.rankParticipant(splitId, user3), 1, "user3 is now first");
+        uint256[] memory secondWeights = new uint256[](2);
+        secondWeights[0] = 5;
+        secondWeights[1] = 4;
+        vm.prank(user2);
+        weSplit.initializeApprove(splitId, DAI, amount, receiver, secondWeights);
+        vm.prank(user3);
+        weSplit.approve(splitId);
+
+        uint256 balanceUser2End = IERC20(DAI).balanceOf(user2);
+        uint256 balanceUser3End = IERC20(DAI).balanceOf(user3);
+
+        assertEq(
+            balanceUser2Middle - balanceUser2End,
+            4 ether,
+            "balance user 2 second transaction"
+        );
+        assertEq(
+            balanceUser3Middle - balanceUser3End,
+            5 ether,
+            "balance user 3 second transaction"
+        );
     }
 }
