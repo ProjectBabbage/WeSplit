@@ -17,6 +17,7 @@ contract TestWeSplit is Test {
     OwnableProxy public weSplitProxy;
     WeSplit public weSplit;
     bytes public constant emptyData = "";
+
     address user1 = address(123);
     address user2 = address(978);
     address DAI = address(0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063);
@@ -51,7 +52,12 @@ contract TestWeSplit is Test {
         vm.expectRevert("Ownable: caller is not the owner");
         weSplit.upgradeTo(address(newWeSplitImplementation));
         vm.stopPrank();
+
         weSplit.upgradeTo(address(newWeSplitImplementation));
+
+        weSplit.renounceOwnership();
+        vm.expectRevert("Ownable: caller is not the owner");
+        weSplit.upgradeTo(address(weSplitImplementation));
     }
 
     function testCreate() public {
