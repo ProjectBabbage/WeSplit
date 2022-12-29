@@ -7,3 +7,7 @@ out/
 
 # Dotenv file
 .env
+
+# Storage layout checks
+layout/WeSplit.layout
+layout/WeSplitProxy.layout

@@ -7,6 +7,12 @@ FOUNDRY_ETH_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}
 test:
 	forge test -vv
 
+storage-check:
+	forge inspect src/WeSplit.sol:WeSplit storage-layout --pretty | awk -F\| 'NR>2 {$$7=""; print $$0}' > layout/WeSplit.layout
+	forge inspect src/WeSplitProxy.sol:WeSplitProxy storage-layout --pretty | awk -F\| 'NR>2 {$$7=""; print $$0}' > layout/WeSplitProxy.layout
+	if ! diff -u layout/reference.layout layout/WeSplit.layout; then false; fi
+	if ! diff -u layout/reference.layout layout/WeSplitProxy.layout; then false; fi
+
 build:
 	forge build --force --sizes
 

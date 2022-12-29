@@ -6,7 +6,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console.sol";
-import "../src/OwnableProxy.sol";
+import "../src/WeSplitProxy.sol";
 import "../src/WeSplit.sol";
 import "../src/Arith.sol";
 
@@ -14,7 +14,7 @@ contract TestWeSplit is Test {
     using Arith for uint256;
 
     WeSplit public weSplitImplementation;
-    OwnableProxy public weSplitProxy;
+    WeSplitProxy public weSplitProxy;
     WeSplit public weSplit;
     bytes public constant emptyData = "";
     address user1;
@@ -30,7 +30,7 @@ contract TestWeSplit is Test {
 
     function setUp() public {
         weSplitImplementation = new WeSplit();
-        weSplitProxy = new OwnableProxy(address(weSplitImplementation), emptyData);
+        weSplitProxy = new WeSplitProxy(address(weSplitImplementation), emptyData);
         weSplit = WeSplit(address(weSplitProxy));
 
         for (uint256 i; i < allUsers.length; i++) {
@@ -59,6 +59,7 @@ contract TestWeSplit is Test {
     }
 
     function testUpgradeOnlyOwner() public {
+        assertEq(weSplit.owner(), address(this), "owner is the test contract");
         WeSplit newWeSplitImplementation = new WeSplit();
         vm.startPrank(user1);
         vm.expectRevert("Ownable: caller is not the owner");
@@ -68,6 +69,7 @@ contract TestWeSplit is Test {
         weSplit.upgradeTo(address(newWeSplitImplementation));
 
         weSplit.renounceOwnership();
+        assertEq(weSplit.owner(), address(0), "no owner anymore");
         vm.expectRevert("Ownable: caller is not the owner");
         weSplit.upgradeTo(address(weSplitImplementation));
     }
