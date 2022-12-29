@@ -25,4 +25,4 @@ verify:
 gasprice:
 	cast gas-price --rpc-url ${FOUNDRY_ETH_RPC_URL}
 
-.PHONY: test build deploy verify
+.PHONY: test storage-check build deploy verify gasprice

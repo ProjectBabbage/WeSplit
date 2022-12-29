@@ -1,4 +1,4 @@
-name: test
+name: WeSplit CI
 
 on: # and a condition on commit (example: it must contain "release")
   push:
@@ -6,10 +6,22 @@ on: # and a condition on commit (example: it must contain "release")
   pull_request:
 
 jobs:
+  storage-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: storage-check
+        run: make storage-check
+
   forge-test:
-    strategy:
-      fail-fast: true
-    name: WeSplit tests
     runs-on: ubuntu-latest
     env:
       ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
@@ -23,12 +35,8 @@ jobs:
         with:
           version: nightly
 
-      - name: Run Forge tests
-        run: |
-          make test
-        id: test
+      - name: Build contracts and check sizes
+        run: make build
 
-      - name: Check proxy storage
-        run: |
-          make storage-check
-        id: storage-check
+      - name: Run Forge tests
+        run: make test
