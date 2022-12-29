@@ -6,13 +6,17 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console.sol";
+import "../src/OwnableProxy.sol";
 import "../src/WeSplit.sol";
 import "../src/Arith.sol";
 
 contract TestWeSplit is Test {
     using Arith for uint256;
 
+    WeSplit public weSplitImplementation;
+    OwnableProxy public weSplitProxy;
     WeSplit public weSplit;
+    bytes public constant emptyData = "";
     address user1;
     address user2;
     address user3;
@@ -25,7 +29,10 @@ contract TestWeSplit is Test {
     uint256[] weights;
 
     function setUp() public {
-        weSplit = new WeSplit();
+        weSplitImplementation = new WeSplit();
+        weSplitProxy = new OwnableProxy(address(weSplitImplementation), emptyData);
+        weSplit = WeSplit(address(weSplitProxy));
+
         for (uint256 i; i < allUsers.length; i++) {
             allUsers[i] = address(uint160(100 + i));
             setUpUser(allUsers[i]);
@@ -49,6 +56,15 @@ contract TestWeSplit is Test {
         IERC20(DAI).approve(address(weSplit), type(uint256).max);
         IERC20(USDC).approve(address(weSplit), type(uint256).max);
         vm.stopPrank();
+    }
+
+    function testUpgradeOnlyOwner() public {
+        WeSplit newWeSplitImplementation = new WeSplit();
+        vm.startPrank(user1);
+        vm.expectRevert("Ownable: caller is not the owner");
+        weSplit.upgradeTo(address(newWeSplitImplementation));
+        vm.stopPrank();
+        weSplit.upgradeTo(address(newWeSplitImplementation));
     }
 
     function testCreate() public {
