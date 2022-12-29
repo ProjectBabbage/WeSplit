@@ -54,8 +54,8 @@ contract WeSplit {
 
         address[] storage sParticipants = split.participants;
 
-        split.rankParticipant[_participant] = sParticipants.length;
         sParticipants.push(_participant);
+        split.rankParticipant[_participant] = sParticipants.length;
     }
 
     function removeParticipant(uint256 _id, address _participant) public {
@@ -68,9 +68,11 @@ contract WeSplit {
         uint256 length = sParticipants.length;
         require(length != 1, "cannot remove last participant");
 
-        sParticipants[participantRank - 1] = sParticipants[length - 1];
+        address lastParticipant = sParticipants[length - 1];
+        sParticipants[participantRank - 1] = lastParticipant;
         sParticipants.pop();
         split.rankParticipant[_participant] = 0;
+        split.rankParticipant[lastParticipant] = participantRank;
     }
 
     function initialize(
