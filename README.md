@@ -4,7 +4,7 @@ Split expenses automatically.
 
 ## Use it
 
-WeSplit is [available on polygonscan](https://polygonscan.com/address/0x748610d5d3061411b00918c41907623dc55aede0#writeContract) !
+WeSplit is [available on polygonscan](https://polygonscan.com/address/0x52decE2Fd883628eA46eBae183cd9D78a81Ef916#writeProxyContract) !
 
 1. `create` a split with all the participants (don't forget to include yourself)
 2. `initialize` a transaction with the receiver and the total amount of token you want to send
