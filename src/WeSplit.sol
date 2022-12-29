@@ -47,6 +47,32 @@ contract WeSplit {
         emit Created(id, _participants);
     }
 
+    function addParticipant(uint256 _id, address _participant) public {
+        Split storage split = splits[_id];
+        require(split.rankParticipant[msg.sender] != 0, "must be participating");
+        require(split.amount == 0, "tx is running");
+
+        address[] storage sParticipants = split.participants;
+
+        split.rankParticipant[_participant] = sParticipants.length;
+        sParticipants.push(_participant);
+    }
+
+    function removeParticipant(uint256 _id, address _participant) public {
+        Split storage split = splits[_id];
+        uint256 participantRank = split.rankParticipant[_participant];
+        require(participantRank != 0, "must be participating");
+        require(split.amount == 0, "tx is running");
+
+        address[] storage sParticipants = split.participants;
+        uint256 length = sParticipants.length;
+        require(length != 1, "cannot remove last participant");
+
+        sParticipants[participantRank - 1] = sParticipants[length - 1];
+        sParticipants.pop();
+        split.rankParticipant[_participant] = 0;
+    }
+
     function initialize(
         uint256 _id,
         address _token,
@@ -55,9 +81,9 @@ contract WeSplit {
         uint256[] calldata _weights
     ) public {
         Split storage split = splits[_id];
-        require(split.rankParticipant[msg.sender] != 0, "must be participating to initialize");
-        require(split.amount == 0, "cannot initialize when tx is running");
-        require(_amount != 0, "cannot initiliaze a tx of 0 amount");
+        require(split.rankParticipant[msg.sender] != 0, "must be participating");
+        require(split.amount == 0, "tx is running");
+        require(_amount != 0, "amount is 0");
 
         if (_weights.length == 0) {
             // if no correct weights are provided, it defaults to an array of ones
@@ -82,9 +108,9 @@ contract WeSplit {
 
     function approve(uint256 _id) public {
         Split storage split = splits[_id];
-        require(split.amount != 0, "tx has not been initialized yet");
-        require(split.rankParticipant[msg.sender] != 0, "you should be participating");
-        require(split.approval[msg.sender] == false, "you already approved");
+        require(split.rankParticipant[msg.sender] != 0, "must be participating");
+        require(split.amount != 0, "tx is not running");
+        require(split.approval[msg.sender] == false, "already approved");
 
         address[] memory sParticipants = split.participants;
         address sToken = split.token;
@@ -163,7 +189,7 @@ contract WeSplit {
 
     function checkTransferabilityUser(uint256 _id, address _user) public view returns (bool) {
         Split storage split = splits[_id];
-        require(split.rankParticipant[_user] != 0, "user should be participating");
+        if (split.rankParticipant[_user] == 0) return false;
         mapping(address => bool) storage sApproval = split.approval;
         address[] memory sParticipants = split.participants;
         address sToken = split.token;
