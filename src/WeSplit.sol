@@ -2,10 +2,14 @@
 pragma solidity ^0.8.13;
 
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
+import "openzeppelin-contracts/proxy/utils/UUPSUpgradeable.sol";
+import "openzeppelin-contracts/access/Ownable.sol";
 import "./Arith.sol";
 
-contract WeSplit {
+contract WeSplit is UUPSUpgradeable, Ownable {
     using Arith for uint256;
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     event Created(uint256 indexed id, address[] participants);
     event Initialized(
