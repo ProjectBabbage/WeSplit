@@ -6,10 +6,9 @@ on: # and a condition on commit (example: it must contain "release")
   pull_request:
 
 jobs:
-  forge-test:
+  forge-tests:
     strategy:
       fail-fast: true
-    name: tests
     runs-on: ubuntu-latest
     env:
       ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
@@ -26,8 +25,7 @@ jobs:
           make test
         id: test
   storage-check:
-    name: storage-check
-    needs: tests
+    needs: forge-tests
     runs-on: ubuntu-latest
     steps:
       - name: Check proxy storage
