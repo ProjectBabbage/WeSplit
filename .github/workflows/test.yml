@@ -9,7 +9,7 @@ jobs:
   forge-test:
     strategy:
       fail-fast: true
-    name: Foundry project
+    name: WeSplit tests
     runs-on: ubuntu-latest
     env:
       ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
@@ -27,3 +27,8 @@ jobs:
         run: |
           make test
         id: test
+
+      - name: Check proxy storage
+        run: |
+          make storage-check
+        id: storage-check
