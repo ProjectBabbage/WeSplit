@@ -26,10 +26,8 @@ jobs:
           make test
         id: test
   storage-check:
-    strategy:
-      fail-fast: true
-    runs-on: ubuntu-latest
     name: WeSplit storage check
+    steps:
       - name: Check proxy storage
         run: |
           make storage-check
