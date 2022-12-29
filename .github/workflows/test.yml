@@ -1,4 +1,4 @@
-name: test
+name: WeSplit CI
 
 on: # and a condition on commit (example: it must contain "release")
   push:
