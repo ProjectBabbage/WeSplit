@@ -22,7 +22,6 @@ jobs:
         run: make storage-check
 
   forge-test:
-    needs: storage-check
     runs-on: ubuntu-latest
     env:
       ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
