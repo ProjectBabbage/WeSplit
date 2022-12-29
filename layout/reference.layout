@@ -1,0 +1,3 @@
+  _owner   address                                             0      0        20      
+  nextId   uint256                                             1      0        32      
+  splits   mapping(uint256 => struct WeSplitStructure.Split)   2      0        32      

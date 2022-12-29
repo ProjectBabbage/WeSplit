@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import "../src/OwnableProxy.sol";
+import "../src/WeSplitProxy.sol";
 import "../src/WeSplit.sol";
 
 contract DeployWeSplit is Script {
@@ -11,7 +11,7 @@ contract DeployWeSplit is Script {
     function run() public {
         vm.startBroadcast();
         WeSplit weSplitImplementation = new WeSplit();
-        new OwnableProxy(address(weSplitImplementation), emptyData);
+        new WeSplitProxy(address(weSplitImplementation), emptyData);
         vm.stopBroadcast();
     }
 }
