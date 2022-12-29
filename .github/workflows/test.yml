@@ -9,6 +9,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
       - uses: ./.github/actions/ci
       - name: Build and check contract size
         run: make build
@@ -17,12 +20,18 @@ jobs:
     env:
       ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
     steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
       - uses: ./.github/actions/ci
       - name: Run Forge tests
         run: make test
   storage-check:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
       - uses: ./.github/actions/ci
       - name: Check proxy storage
         run: make storage-check
