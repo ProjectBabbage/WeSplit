@@ -64,7 +64,12 @@ contract TestWeSplit is Test {
         vm.expectRevert("Ownable: caller is not the owner");
         weSplit.upgradeTo(address(newWeSplitImplementation));
         vm.stopPrank();
+
         weSplit.upgradeTo(address(newWeSplitImplementation));
+
+        weSplit.renounceOwnership();
+        vm.expectRevert("Ownable: caller is not the owner");
+        weSplit.upgradeTo(address(weSplitImplementation));
     }
 
     function testCreate() public {
