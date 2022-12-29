@@ -28,6 +28,7 @@ jobs:
   storage-check:
     strategy:
       fail-fast: true
+    runs-on: ubuntu-latest
     name: WeSplit storage check
       - name: Check proxy storage
         run: |
