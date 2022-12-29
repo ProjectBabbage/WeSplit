@@ -16,6 +16,7 @@ jobs:
       - name: Build and check contract size
         run: make build
   forge-tests:
+    needs: build
     runs-on: ubuntu-latest
     env:
       ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
