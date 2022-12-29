@@ -28,6 +28,7 @@ jobs:
   storage-check:
     name: storage-check
     needs: tests
+    runs-on: ubuntu-latest
     steps:
       - name: Check proxy storage
         run: |
