@@ -14,7 +14,7 @@ storage-check:
 	if ! diff -u layout/reference.layout layout/WeSplitProxy.layout; then false; fi
 
 build:
-	forge build --force --sizes
+	forge build --sizes
 
 deploy:
 	forge script script/DeployWeSplit.sol --private-key ${PRIVATE_KEY} --broadcast --etherscan-api-key ${POLYGONSCAN_API_KEY} --verify

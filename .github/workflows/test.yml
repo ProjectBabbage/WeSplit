@@ -6,32 +6,23 @@ on: # and a condition on commit (example: it must contain "release")
   pull_request:
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/ci
+      - name: Build and check contract size
+        run: make build
   forge-tests:
-    strategy:
-      fail-fast: true
     runs-on: ubuntu-latest
     env:
       ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
     steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
+      - uses: ./.github/actions/ci
       - name: Run Forge tests
-        run: |
-          make test
-        id: test
+        run: make test
   storage-check:
-    needs: forge-tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+      - uses: ./.github/actions/ci
       - name: Check proxy storage
-        run: |
-          make storage-check
-        id: storage-check
+        run: make storage-check

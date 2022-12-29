@@ -1,0 +1,13 @@
+name: ci
+description: Prepare the worker for the CI
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
