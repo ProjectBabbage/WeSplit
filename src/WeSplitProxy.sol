@@ -7,6 +7,7 @@ import "openzeppelin-contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./WeSplitStructure.sol";
 
 /// @title WeSplit Proxy contract.
+/// @author Project Babbage.
 contract WeSplitProxy is ERC1967Proxy, WeSplitStructure {
     constructor(address _logic, bytes memory _data) ERC1967Proxy(_logic, _data) Ownable() {}
 }

@@ -4,11 +4,10 @@ pragma solidity ^0.8.13;
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import "forge-std/Test.sol";
-import "forge-std/Vm.sol";
-import "forge-std/console.sol";
-import "../src/WeSplitProxy.sol";
-import "../src/WeSplit.sol";
-import "../src/Arith.sol";
+
+import "src/WeSplitProxy.sol";
+import "src/WeSplit.sol";
+import "src/Arith.sol";
 
 contract TestWeSplit is Test {
     using Arith for uint256;

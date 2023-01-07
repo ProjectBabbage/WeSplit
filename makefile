@@ -19,10 +19,13 @@ build:
 deploy:
 	forge script script/DeployWeSplit.sol --private-key ${PRIVATE_KEY} --broadcast --etherscan-api-key ${POLYGONSCAN_API_KEY} --verify
 
+upgrade:
+	forge script script/UpgradeWeSplit.sol --private-key ${PRIVATE_KEY} --broadcast --etherscan-api-key ${POLYGONSCAN_API_KEY} --verify
+
 verify:
 	forge verify-contract --chain 137 --watch --constructor-args ${ENCODED_CONSTRUCTOR_ARGS} ${ADDRESS} WeSplit ${POLYGONSCAN_API_KEY}
 
 gasprice:
 	cast gas-price --rpc-url ${FOUNDRY_ETH_RPC_URL}
 
-.PHONY: test storage-check build deploy verify gasprice
+.PHONY: test storage-check build deploy upgrade verify gasprice
