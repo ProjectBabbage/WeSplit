@@ -6,11 +6,16 @@ import "openzeppelin-contracts/proxy/utils/UUPSUpgradeable.sol";
 import "./Arith.sol";
 import "./WeSplitStructure.sol";
 
+/// @title WeSplit Implementation contract.
+/// @author Project Babbage.
 contract WeSplit is UUPSUpgradeable, WeSplitStructure {
     using Arith for uint256;
 
     function _authorizeUpgrade(address) internal override(UUPSUpgradeable) onlyOwner {}
 
+    /// @notice Creates a new split and returns the corresponding id.
+    /// @param _participants the initial participants of the split to create.
+    /// @return id the id of the split created.
     function create(address[] calldata _participants) public returns (uint256 id) {
         id = nextId++;
         Split storage split = splits[id];
@@ -22,10 +27,13 @@ contract WeSplit is UUPSUpgradeable, WeSplitStructure {
         emit Created(id, _participants);
     }
 
+    /// @notice Add a participant to a non-active split.
+    /// @param _id the id of the split in which to add a participant.
+    /// @param _participant the participant to add.
     function addParticipant(uint256 _id, address _participant) public {
         Split storage split = splits[_id];
         require(split.rankParticipant[msg.sender] != 0, "must be participating");
-        require(split.amount == 0, "tx is running");
+        require(split.amount == 0, "tx is initialized");
 
         address[] storage sParticipants = split.participants;
 
@@ -33,11 +41,14 @@ contract WeSplit is UUPSUpgradeable, WeSplitStructure {
         split.rankParticipant[_participant] = sParticipants.length;
     }
 
+    /// @notice Remove a participant to a non-active split.
+    /// @param _id the id of the split in which to remove a participant.
+    /// @param _participant the participant to remove.
     function removeParticipant(uint256 _id, address _participant) public {
         Split storage split = splits[_id];
         uint256 participantRank = split.rankParticipant[_participant];
         require(participantRank != 0, "must be participating");
-        require(split.amount == 0, "tx is running");
+        require(split.amount == 0, "tx is initialized");
 
         address[] storage sParticipants = split.participants;
         uint256 length = sParticipants.length;
@@ -50,6 +61,12 @@ contract WeSplit is UUPSUpgradeable, WeSplitStructure {
         split.rankParticipant[lastParticipant] = participantRank;
     }
 
+    /// @notice Initialize a transaction in a split.
+    /// @param _id the id of the split in which to initialize a transaction.
+    /// @param _token the token to send.
+    /// @param _amount the amount of token to send.
+    /// @param _receiver the user that will receive the tokens.
+    /// @param _weights the weights determining the participation.
     function initialize(
         uint256 _id,
         address _token,
@@ -59,7 +76,7 @@ contract WeSplit is UUPSUpgradeable, WeSplitStructure {
     ) public {
         Split storage split = splits[_id];
         require(split.rankParticipant[msg.sender] != 0, "must be participating");
-        require(split.amount == 0, "tx is running");
+        require(split.amount == 0, "tx is initialized");
         require(_amount != 0, "amount is 0");
 
         if (_weights.length == 0) {
@@ -83,10 +100,12 @@ contract WeSplit is UUPSUpgradeable, WeSplitStructure {
         emit Initialized(_id, sParticipants, _token, _amount, _receiver);
     }
 
+    /// @notice Approve the transaction that has been initialized.
+    /// @param _id the id of the corresponding split.
     function approve(uint256 _id) public {
         Split storage split = splits[_id];
         require(split.rankParticipant[msg.sender] != 0, "must be participating");
-        require(split.amount != 0, "tx is not running");
+        require(split.amount != 0, "tx is not initialized");
         require(split.approval[msg.sender] == false, "already approved");
 
         address[] memory sParticipants = split.participants;
@@ -110,6 +129,13 @@ contract WeSplit is UUPSUpgradeable, WeSplitStructure {
         emit Approved(_id, sParticipants, msg.sender, sAmount);
     }
 
+
+    /// @notice Initialize a transaction and approve it.
+    /// @param _id the id of the split in which to initialize and approve a transaction.
+    /// @param _token the token to send.
+    /// @param _amount the amount of token to send.
+    /// @param _receiver the user that will receive the tokens.
+    /// @param _weights the weights determining the participation.
     function initializeApprove(
         uint256 _id,
         address _token,
@@ -121,6 +147,13 @@ contract WeSplit is UUPSUpgradeable, WeSplitStructure {
         approve(_id);
     }
 
+    /// @notice Create a new split, initialize a transaction in this split and approve it.
+    /// @param _participants the initial participants of the split to create.
+    /// @param _token the token to send.
+    /// @param _amount the amount of token to send.
+    /// @param _receiver the user that will receive the tokens.
+    /// @param _weights the weights determining the participation.
+    /// @return id the id of the split created.
     function createInitializeApprove(
         address[] calldata _participants,
         address _token,
@@ -132,38 +165,59 @@ contract WeSplit is UUPSUpgradeable, WeSplitStructure {
         initializeApprove(id, _token, _amount, _receiver, _weights);
     }
 
+    /// @notice Return the participants of a split.
+    /// @param _id the id of the split to look for.
     function participants(uint256 _id) public view returns (address[] memory) {
         return splits[_id].participants;
     }
 
+    /// @notice Return the ranks of the participants in a split.
+    /// @param _id the id of the split to look for.
     function rankParticipant(uint256 _id, address _user) public view returns (uint256) {
         return splits[_id].rankParticipant[_user];
     }
 
+    /// @notice Check if a user is approving a transation.
+    /// @param _id the id of the split to look for.
+    /// @param _user the user the check.
     function approval(uint256 _id, address _user) public view returns (bool) {
         return splits[_id].approval[_user];
     }
 
+    /// @notice Return the number of users approving the transaction in a split.
+    /// @param _id the id of the split to look for.
     function approvalCount(uint256 _id) public view returns (uint256) {
         return splits[_id].approvalCount;
     }
 
+    /// @notice Return the token of the transaction in a split.
+    /// @param _id the id of the split to look for.
     function token(uint256 _id) public view returns (address) {
         return splits[_id].token;
     }
 
+    /// @notice Return the amount of token of the transaction in a split.
+    /// @param _id the id of the split to look for.
     function amount(uint256 _id) public view returns (uint256) {
         return splits[_id].amount;
     }
 
+    /// @notice Return the receiver of the transaction in a split.
+    /// @param _id the id of the split to look for.
     function receiver(uint256 _id) public view returns (address) {
         return splits[_id].receiver;
     }
 
+    /// @notice Return the weights of the transaction in a split.
+    /// @param _id the id of the split to look for.
     function weights(uint256 _id) public view returns (uint256[] memory) {
         return splits[_id].weights;
     }
 
+    /// @notice Return the transferability of a user in a split.
+    /// @dev Checks whether the user has a sufficient balance, has a sufficient allowance, and has approved the transaction.
+    /// @param _id the id of the split to look for.
+    /// @param _user the user to check.
     function checkTransferabilityUser(uint256 _id, address _user) public view returns (bool) {
         Split storage split = splits[_id];
         if (split.rankParticipant[_user] == 0) return false;
@@ -180,6 +234,9 @@ contract WeSplit is UUPSUpgradeable, WeSplitStructure {
         return enoughAllowed && enoughBalance && approved;
     }
 
+    /// @notice Return the transferability of a transaction in a split.
+    /// @dev Checks that each user has a sufficient balance, has a sufficient allowance, and has approved the transaction.
+    /// @param _id the id of the split to look for.
     function checkTransferability(uint256 _id) public view returns (bool) {
         Split storage split = splits[_id];
         address[] memory sParticipants = split.participants;

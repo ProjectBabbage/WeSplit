@@ -3,6 +3,8 @@ pragma solidity ^0.8.13;
 
 import "openzeppelin-contracts/access/Ownable.sol";
 
+/// @title WeSplit storage.
+/// @author Project Babbage.
 contract WeSplitStructure is Ownable {
     uint256 public nextId;
     mapping(uint256 => Split) internal splits;
