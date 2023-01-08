@@ -120,7 +120,8 @@ contract WeSplit is UUPSUpgradeable, WeSplitStructure {
             for (uint256 i; i < sParticipants.length; i++) weightsSum += split.weights[i];
             for (uint256 i; i < sParticipants.length; i++) {
                 uint256 shareOfAmount = (sAmount * split.weights[i]).divUp(weightsSum);
-                IERC20(sToken).transferFrom(sParticipants[i], address(this), shareOfAmount);
+                if (shareOfAmount != 0)
+                    IERC20(sToken).transferFrom(sParticipants[i], address(this), shareOfAmount);
             }
             IERC20(sToken).transfer(split.receiver, sAmount);
             split.amount = 0;
